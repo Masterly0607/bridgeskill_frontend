@@ -36,6 +36,7 @@ export default function LoginPage() {
       const data = response.data;
 
       const user = {
+        id: data.id,
         fullName: data.fullName,
         email: data.email,
         roleId: data.roleId,

@@ -66,20 +66,25 @@ export default function HomePage() {
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               {isAuthenticated && user ? (
                 <>
-                  <Button asChild size="lg" className="min-w-40 rounded-xl">
-                    <Link href={dashboardRoute}>Go to Dashboard</Link>
-                  </Button>
+                 <Button
+  asChild
+  size="lg"
+  variant="secondary"
+  className="min-w-40 rounded-xl border-0"
+>
+  <Link href={dashboardRoute}>Go to Dashboard</Link>
+</Button>
 
-                  <Button
-                    asChild
-                    size="lg"
-                    variant="outline"
-                    className="min-w-40 rounded-xl"
-                  >
-                    <Link href="/jobs">Explore Jobs</Link>
-                  </Button>
+<Button
+  asChild
+  size="lg"
+  variant="secondary"
+  className="min-w-40 rounded-xl border-0"
+>
+  <Link href="/jobs">Explore Jobs</Link>
+</Button>
 
-                  <LogoutButton />
+<LogoutButton variant="secondary" className="min-w-32 rounded-xl border-0" />
                 </>
               ) : (
                 <>
