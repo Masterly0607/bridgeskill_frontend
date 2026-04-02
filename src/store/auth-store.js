@@ -1,10 +1,14 @@
+"use client";
+
 import { create } from "zustand";
 import { STORAGE_KEYS } from "@/lib/constants";
+import api from "@/lib/axios";
 
 export const useAuthStore = create((set) => ({
   token: null,
   user: null,
   isAuthenticated: false,
+  isHydrated: false,
 
   setAuth: ({ token, user }) => {
     if (typeof window !== "undefined") {
@@ -16,6 +20,7 @@ export const useAuthStore = create((set) => ({
       token,
       user,
       isAuthenticated: true,
+      isHydrated: true,
     });
   },
 
@@ -29,20 +34,47 @@ export const useAuthStore = create((set) => ({
       token: null,
       user: null,
       isAuthenticated: false,
+      isHydrated: true,
     });
   },
 
-  hydrateAuth: () => {
+  hydrateAuth: async () => {
     if (typeof window === "undefined") return;
 
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-    const user = localStorage.getItem(STORAGE_KEYS.USER);
 
-    if (token && user) {
+    if (!token) {
+      set({
+        token: null,
+        user: null,
+        isAuthenticated: false,
+        isHydrated: true,
+      });
+      return;
+    }
+
+    try {
+      const response = await api.get("/api/auth/me");
+
+      const user = response.data;
+
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+
       set({
         token,
-        user: JSON.parse(user),
+        user,
         isAuthenticated: true,
+        isHydrated: true,
+      });
+    } catch (error) {
+      localStorage.removeItem(STORAGE_KEYS.TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.USER);
+
+      set({
+        token: null,
+        user: null,
+        isAuthenticated: false,
+        isHydrated: true,
       });
     }
   },

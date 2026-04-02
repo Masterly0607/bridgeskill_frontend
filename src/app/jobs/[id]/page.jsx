@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { MapPin, BriefcaseBusiness, Wallet } from "lucide-react";
+import { MapPin, BriefcaseBusiness, Wallet, Clock3 } from "lucide-react";
 import { toast } from "sonner";
 
 import { BackButton } from "@/components/common/back-button";
@@ -30,6 +30,7 @@ export default function JobDetailPage() {
   const [myApplications, setMyApplications] = useState([]);
 
   const isStudent = isAuthenticated && user?.roleId === ROLES.STUDENT;
+  const isClosed = job?.status === "CLOSED";
 
   const hasApplied = useMemo(() => {
     return myApplications.some(
@@ -73,6 +74,11 @@ export default function JobDetailPage() {
   }, [isStudent]);
 
   const handleApply = async () => {
+    if (isClosed) {
+      toast.error("This job is closed and can no longer accept applications.");
+      return;
+    }
+
     try {
       setApplying(true);
 
@@ -125,12 +131,12 @@ export default function JobDetailPage() {
       <div className="mx-auto max-w-5xl space-y-6">
         <BackButton href="/jobs" label="Back to Jobs" />
 
-        <Card className="rounded-3xl border-slate-200 shadow-sm">
-          <CardHeader className="space-y-6">
+        <Card className="rounded-3xl border border-slate-200 shadow-sm">
+          <CardHeader className="space-y-6 border-b border-slate-100 pb-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-3">
                 <p className="text-sm font-medium uppercase tracking-[0.2em] text-slate-500">
-                  Job Overview
+                  Job Details
                 </p>
 
                 <CardTitle className="text-4xl font-bold text-slate-900">
@@ -159,75 +165,114 @@ export default function JobDetailPage() {
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-8">
+          <CardContent className="space-y-8 p-6">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl bg-slate-50 p-5">
-                <p className="text-sm font-medium text-slate-500">Posted At</p>
+                <p className="flex items-center gap-2 text-sm font-medium text-slate-500">
+                  <Clock3 className="h-4 w-4" />
+                  Posted At
+                </p>
                 <p className="mt-2 text-base font-semibold text-slate-900">
                   {formatDateTime(job.createdAt)}
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-slate-50 p-5">
-                <p className="text-sm font-medium text-slate-500">
-                  Last Updated
-                </p>
-                <p className="mt-2 text-base font-semibold text-slate-900">
-                  {formatDateTime(job.updatedAt)}
-                </p>
-              </div>
             </div>
 
-            <div className="space-y-3">
+            <section className="space-y-3">
               <h2 className="text-2xl font-semibold text-slate-900">
                 Job Description
               </h2>
+
               <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm leading-7 text-slate-700">
                 {job.description || "No description available."}
               </div>
-            </div>
+            </section>
 
-            <div className="space-y-3">
+            <section className="space-y-3">
               <h2 className="text-2xl font-semibold text-slate-900">
                 Application
               </h2>
 
-              <div className="flex flex-wrap gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 {!isAuthenticated ? (
-                  <>
-                    <Button asChild className="rounded-xl">
-                      <Link href="/login">Login to Apply</Link>
-                    </Button>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">
+                        Sign in to continue
+                      </p>
+                      <p className="text-sm text-slate-600">
+                        Only student accounts can apply for this job.
+                      </p>
+                    </div>
 
-                    <Button asChild variant="outline" className="rounded-xl">
-                      <Link href="/register">Create Account</Link>
-                    </Button>
-                  </>
+                    <div className="flex flex-wrap gap-3">
+                      <Button asChild className="rounded-xl" disabled={isClosed}>
+                        <Link href="/login">
+                          {isClosed ? "Job Closed" : "Login to Apply"}
+                        </Link>
+                      </Button>
+
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="rounded-xl"
+                      >
+                        <Link href="/register">Create Account</Link>
+                      </Button>
+                    </div>
+                  </div>
                 ) : isStudent ? (
-                  <>
-                    <Button
-                      onClick={handleApply}
-                      disabled={applying || hasApplied}
-                      className="rounded-xl"
-                    >
-                      {hasApplied
-                        ? "Already Applied"
-                        : applying
-                        ? "Applying..."
-                        : "Apply Now"}
-                    </Button>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">
+                        {isClosed
+                          ? "This job is closed"
+                          : hasApplied
+                          ? "You have already applied"
+                          : "Ready to apply?"}
+                      </p>
+                      <p className="text-sm text-slate-600">
+                        {isClosed
+                          ? "Applications are no longer being accepted for this job."
+                          : hasApplied
+                          ? "You can review your submitted applications anytime."
+                          : "Submit your application if this opportunity matches your profile."}
+                      </p>
+                    </div>
 
-                    <Button asChild variant="outline" className="rounded-xl">
-                      <Link href="/student/applications">My Applications</Link>
-                    </Button>
-                  </>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        onClick={handleApply}
+                        disabled={isClosed || applying || hasApplied}
+                        className="rounded-xl"
+                      >
+                        {isClosed
+                          ? "Job Closed"
+                          : hasApplied
+                          ? "Already Applied"
+                          : applying
+                          ? "Applying..."
+                          : "Apply Now"}
+                      </Button>
+
+                      <Button asChild variant="outline" className="rounded-xl">
+                        <Link href="/student/applications">My Applications</Link>
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
-                  <p className="text-sm text-slate-600">
-                    Only student accounts can apply for jobs.
-                  </p>
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm font-medium text-slate-900">
+                      Student account required
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      Only student accounts can apply for jobs.
+                    </p>
+                  </div>
                 )}
               </div>
-            </div>
+            </section>
           </CardContent>
         </Card>
       </div>

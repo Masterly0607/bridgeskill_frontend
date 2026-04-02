@@ -5,16 +5,23 @@ import { useRouter } from "next/navigation";
 
 import { useAuthStore } from "@/store/auth-store";
 import { getDashboardRouteByRole } from "@/lib/auth-redirect";
+import { PageLoader } from "@/components/common/page-loader";
 
 export function GuestRoute({ children }) {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, isHydrated } = useAuthStore();
 
   useEffect(() => {
+    if (!isHydrated) return;
+
     if (isAuthenticated && user) {
       router.replace(getDashboardRouteByRole(user.roleId));
     }
-  }, [isAuthenticated, user, router]);
+  }, [isHydrated, isAuthenticated, user, router]);
+
+  if (!isHydrated) {
+    return <PageLoader />;
+  }
 
   if (isAuthenticated && user) {
     return null;

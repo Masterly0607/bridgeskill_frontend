@@ -1,146 +1,152 @@
 "use client";
 
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-export function JobForm({
+function buildFormValues(values = {}) {
+  return {
+    title: values?.title ?? "",
+    description: values?.description ?? "",
+    category: values?.category ?? "",
+    location: values?.location ?? "",
+    salary:
+      values?.salary !== null && values?.salary !== undefined
+        ? String(values.salary)
+        : "",
+  };
+}
+
+export default function JobForm({
   initialValues,
   onSubmit,
-  isSubmitting,
-  submitLabel,
+  isSubmitting = false,
+  submitLabel = "Save Job",
 }) {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm({
-    defaultValues: {
-      title: "",
-      description: "",
-      category: "",
-      location: "",
-      salary: "",
-      status: "OPEN",
-    },
-  });
+  const initialForm = useMemo(() => buildFormValues(initialValues), [initialValues]);
 
-  useEffect(() => {
-    reset({
-      title: initialValues?.title || "",
-      description: initialValues?.description || "",
-      category: initialValues?.category || "",
-      location: initialValues?.location || "",
-      salary:
-        initialValues?.salary !== undefined && initialValues?.salary !== null
-          ? String(initialValues.salary)
-          : "",
-      status: initialValues?.status || "OPEN",
+  const [form, setForm] = useState(initialForm);
+  const [errors, setErrors] = useState({});
+
+  const handleChange = (field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [field]: "",
+    }));
+  };
+
+  const validate = () => {
+    const nextErrors = {};
+
+    if (!form.title.trim()) {
+      nextErrors.title = "Title is required.";
+    }
+
+    if (!form.description.trim()) {
+      nextErrors.description = "Description is required.";
+    }
+
+    if (!form.category.trim()) {
+      nextErrors.category = "Category is required.";
+    }
+
+    if (!form.location.trim()) {
+      nextErrors.location = "Location is required.";
+    }
+
+    if (!String(form.salary).trim()) {
+      nextErrors.salary = "Salary is required.";
+    } else if (Number(form.salary) < 0) {
+      nextErrors.salary = "Salary must be 0 or greater.";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validate()) return;
+
+    await onSubmit({
+      title: form.title.trim(),
+      description: form.description.trim(),
+      category: form.category.trim(),
+      location: form.location.trim(),
+      salary: Number(form.salary),
     });
-  }, [initialValues, reset]);
+  };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="title">Job Title</Label>
-          <Input
-            id="title"
-            placeholder="Enter job title"
-            {...register("title", {
-              required: "Job title is required",
-            })}
-          />
-          {errors.title && (
-            <p className="text-sm text-red-500">{errors.title.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            placeholder="Enter job description"
-            rows={6}
-            {...register("description", {
-              required: "Description is required",
-            })}
-          />
-          {errors.description && (
-            <p className="text-sm text-red-500">
-              {errors.description.message}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
-          <Input
-            id="category"
-            placeholder="Enter category"
-            {...register("category", {
-              required: "Category is required",
-            })}
-          />
-          {errors.category && (
-            <p className="text-sm text-red-500">{errors.category.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="location">Location</Label>
-          <Input
-            id="location"
-            placeholder="Enter location"
-            {...register("location", {
-              required: "Location is required",
-            })}
-          />
-          {errors.location && (
-            <p className="text-sm text-red-500">{errors.location.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="salary">Salary</Label>
-          <Input
-            id="salary"
-            type="number"
-            step="0.01"
-            placeholder="Enter salary"
-            {...register("salary", {
-              required: "Salary is required",
-            })}
-          />
-          {errors.salary && (
-            <p className="text-sm text-red-500">{errors.salary.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
-          <select
-            id="status"
-            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none"
-            {...register("status", {
-              required: "Status is required",
-            })}
-          >
-            <option value="OPEN">OPEN</option>
-            <option value="CLOSED">CLOSED</option>
-          </select>
-          {errors.status && (
-            <p className="text-sm text-red-500">{errors.status.message}</p>
-          )}
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Job Title</label>
+        <Input
+          value={form.title}
+          onChange={(e) => handleChange("title", e.target.value)}
+          placeholder="Enter job title"
+        />
+        {errors.title && <p className="text-sm text-red-500">{errors.title}</p>}
       </div>
 
-      <Button type="submit" className="mt-2 rounded-xl px-6" disabled={isSubmitting}>
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Description</label>
+        <Textarea
+          value={form.description}
+          onChange={(e) => handleChange("description", e.target.value)}
+          placeholder="Enter job description"
+          rows={5}
+        />
+        {errors.description && (
+          <p className="text-sm text-red-500">{errors.description}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Category</label>
+        <Input
+          value={form.category}
+          onChange={(e) => handleChange("category", e.target.value)}
+          placeholder="Enter category"
+        />
+        {errors.category && (
+          <p className="text-sm text-red-500">{errors.category}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Location</label>
+        <Input
+          value={form.location}
+          onChange={(e) => handleChange("location", e.target.value)}
+          placeholder="Enter location"
+        />
+        {errors.location && (
+          <p className="text-sm text-red-500">{errors.location}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Salary</label>
+        <Input
+          type="number"
+          min="0"
+          step="0.01"
+          value={form.salary}
+          onChange={(e) => handleChange("salary", e.target.value)}
+          placeholder="Enter salary"
+        />
+        {errors.salary && <p className="text-sm text-red-500">{errors.salary}</p>}
+      </div>
+
+      <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? "Saving..." : submitLabel}
       </Button>
     </form>

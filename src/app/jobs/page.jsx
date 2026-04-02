@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { getJobsApi } from "@/services/jobs.service";
-import { JobCard } from "@/components/jobs/job-card";
+import JobCard  from "@/components/jobs/job-card";
 import { JobsFilterBar } from "@/components/jobs/jobs-filter-bar";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageLoader } from "@/components/common/page-loader";

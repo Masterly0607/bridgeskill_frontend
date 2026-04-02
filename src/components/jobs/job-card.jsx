@@ -1,50 +1,79 @@
+"use client";
+
 import Link from "next/link";
-import { MapPin, BriefcaseBusiness, Wallet } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import CloseJobDialog from "@/components/jobs/close-job-dialog";
 import { JobStatusBadge } from "@/components/jobs/job-status-badge";
-import { formatCurrency } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
-export function JobCard({ job }) {
+function formatSalary(value) {
+  if (value === null || value === undefined || value === "") {
+    return "$0";
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(Number(value));
+}
+
+function formatDate(value) {
+  if (!value) return "N/A";
+
+  return new Date(value).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export default function JobCard({ job, onJobUpdated }) {
+  const isClosed = job?.status === "CLOSED";
+
   return (
-    <Card className="rounded-2xl border-slate-200 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-      <CardHeader className="space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-2">
-            <CardTitle className="text-2xl text-slate-900">
-              {job.title}
-            </CardTitle>
-
-            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
-              <span className="inline-flex items-center gap-1">
-                <BriefcaseBusiness className="h-4 w-4" />
-                {job.category || "Uncategorized"}
-              </span>
-
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                {job.location || "Not specified"}
-              </span>
-            </div>
-          </div>
+    <Card className="h-full rounded-3xl border border-slate-200 shadow-sm transition hover:shadow-md">
+      <CardContent className="flex h-full flex-col p-6">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <h3 className="line-clamp-1 text-2xl font-bold text-slate-900">
+            {job.title}
+          </h3>
 
           <JobStatusBadge status={job.status} />
         </div>
-      </CardHeader>
 
-      <CardContent className="space-y-5">
-        <p className="line-clamp-2 text-sm leading-6 text-slate-600">
-          {job.description || "No description available."}
-        </p>
+        <div className="space-y-2">
+          <p className="text-base text-slate-600">
+            {job.category || "N/A"} • {job.location || "N/A"}
+          </p>
 
-        <div className="text-sm font-medium text-slate-700">
-          {formatCurrency(job.salary)}
+          <p className="text-xl font-semibold text-slate-900">
+            {formatSalary(job.salary)}
+          </p>
+
+          <p className="text-sm text-slate-500">
+            Posted: {formatDate(job.createdAt)}
+          </p>
         </div>
 
-        <Button asChild className="w-full rounded-xl">
-          <Link href={`/jobs/${job.id}`}>View Details</Link>
-        </Button>
+        <div className="mt-auto pt-6 flex flex-wrap gap-2">
+          <Button asChild variant="secondary">
+            <Link href={`/jobs/${job.id}`}>View Details</Link>
+          </Button>
+
+          {onJobUpdated &&
+            (isClosed ? (
+              <Button variant="secondary" disabled>
+                Closed
+              </Button>
+            ) : (
+              <CloseJobDialog
+                jobTitle={job.title}
+                onConfirm={() => onJobUpdated(job)}
+              />
+            ))}
+        </div>
       </CardContent>
     </Card>
   );

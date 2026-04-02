@@ -6,12 +6,15 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
 import { hasRequiredRole } from "@/lib/role";
 import { getDashboardRouteByRole } from "@/lib/auth-redirect";
+import { PageLoader } from "@/components/common/page-loader";
 
 export function ProtectedRoute({ children, allowedRoles = [] }) {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, isHydrated } = useAuthStore();
 
   useEffect(() => {
+    if (!isHydrated) return;
+
     if (!isAuthenticated || !user) {
       router.replace("/login");
       return;
@@ -20,7 +23,11 @@ export function ProtectedRoute({ children, allowedRoles = [] }) {
     if (allowedRoles.length > 0 && !hasRequiredRole(user.roleId, allowedRoles)) {
       router.replace(getDashboardRouteByRole(user.roleId));
     }
-  }, [isAuthenticated, user, allowedRoles, router]);
+  }, [isHydrated, isAuthenticated, user, allowedRoles, router]);
+
+  if (!isHydrated) {
+    return <PageLoader />;
+  }
 
   if (!isAuthenticated || !user) {
     return null;

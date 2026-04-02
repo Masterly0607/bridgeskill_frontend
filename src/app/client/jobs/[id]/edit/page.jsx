@@ -6,55 +6,69 @@ import { toast } from "sonner";
 
 import { ProtectedRoute } from "@/components/common/protected-route";
 import { BackButton } from "@/components/common/back-button";
-import { PageLoader } from "@/components/common/page-loader";
-import { JobForm } from "@/components/jobs/job-form";
+import JobForm from "@/components/jobs/job-form";
 import { ROLES } from "@/lib/role";
 import { getJobByIdApi, updateJobApi } from "@/services/jobs.service";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-export default function ClientEditJobPage() {
+export default function EditJobPage() {
   const params = useParams();
   const router = useRouter();
+  const jobId = params?.id;
 
   const [job, setJob] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchJob = async () => {
-    try {
-      setLoading(true);
-      const response = await getJobByIdApi(params.id);
-      setJob(response.data);
-    } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to load job.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (params?.id) {
+    const fetchJob = async () => {
+      try {
+        setIsLoading(true);
+        const response = await getJobByIdApi(jobId);
+        setJob(response.data);
+      } catch (error) {
+        console.error("Failed to fetch job:", error);
+        toast.error(error?.response?.data?.message || "Failed to load job.");
+        router.push("/client/jobs");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (jobId) {
       fetchJob();
     }
-  }, [params?.id]);
+  }, [jobId, router]);
 
-  const handleSubmit = async (values) => {
+  const handleUpdateJob = async (values) => {
     try {
       setIsSubmitting(true);
 
-      await updateJobApi(params.id, {
-        ...values,
+      await updateJobApi(jobId, {
+        title: values.title,
+        description: values.description,
+        category: values.category,
+        location: values.location,
         salary: Number(values.salary),
+        status: job?.status || "OPEN",
       });
 
       toast.success("Job updated successfully");
       router.push("/client/jobs");
     } catch (error) {
+      console.error("Failed to update job:", error);
+
       const responseData = error?.response?.data;
 
       if (responseData?.errors) {
         const firstError = Object.values(responseData.errors)[0];
-        toast.error(firstError);
+        toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
         return;
       }
 
@@ -67,7 +81,7 @@ export default function ClientEditJobPage() {
   return (
     <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
       <main className="min-h-screen bg-slate-50 px-4 py-8 md:px-6 md:py-10">
-        <div className="mx-auto max-w-5xl space-y-6">
+        <div className="mx-auto w-full max-w-3xl space-y-6">
           <BackButton href="/client/jobs" label="Back to Jobs" />
 
           <Card className="rounded-3xl border-slate-200 shadow-sm">
@@ -75,20 +89,19 @@ export default function ClientEditJobPage() {
               <CardTitle className="text-3xl font-bold text-slate-900">
                 Edit Job
               </CardTitle>
+              <CardDescription>
+                Update your job posting information.
+              </CardDescription>
             </CardHeader>
 
             <CardContent>
-              {loading ? (
-                <PageLoader />
-              ) : !job ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-600">
-                  Job not found.
-                </div>
+              {isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading job...</p>
               ) : (
                 <JobForm
-                  key={job.id}
+                  key={job?.id || "edit-job"}
                   initialValues={job}
-                  onSubmit={handleSubmit}
+                  onSubmit={handleUpdateJob}
                   isSubmitting={isSubmitting}
                   submitLabel="Update Job"
                 />

@@ -8,20 +8,25 @@ import { ProtectedRoute } from "@/components/common/protected-route";
 import { BackButton } from "@/components/common/back-button";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageLoader } from "@/components/common/page-loader";
-import { DeleteJobDialog } from "@/components/jobs/delete-job-dialog";
+import CloseJobDialog from "@/components/jobs/close-job-dialog";
 import { JobStatusBadge } from "@/components/jobs/job-status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { ROLES } from "@/lib/role";
 import { useAuthStore } from "@/store/auth-store";
-import { deleteJobApi, getJobsApi } from "@/services/jobs.service";
+import {
+  closeJobApi,
+  getJobsApi,
+  reopenJobApi,
+} from "@/services/jobs.service";
 
 export default function ClientJobsPage() {
   const { user } = useAuthStore();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState(null);
+  const [closingId, setClosingId] = useState(null);
+  const [reopeningId, setReopeningId] = useState(null);
 
   const fetchJobs = async () => {
     try {
@@ -44,16 +49,45 @@ export default function ClientJobsPage() {
     return jobs.filter((job) => Number(job.clientId) === Number(user.id));
   }, [jobs, user]);
 
-  const handleDelete = async (jobId) => {
+  const handleCloseJob = async (job) => {
     try {
-      setDeletingId(jobId);
-      await deleteJobApi(jobId);
-      toast.success("Job deleted successfully");
+      setClosingId(job.id);
+      await closeJobApi(job);
+      toast.success("Job closed successfully");
       await fetchJobs();
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete job.");
+      const responseData = error?.response?.data;
+
+      if (responseData?.errors) {
+        const firstError = Object.values(responseData.errors)[0];
+        toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
+        return;
+      }
+
+      toast.error(responseData?.message || "Failed to close job.");
     } finally {
-      setDeletingId(null);
+      setClosingId(null);
+    }
+  };
+
+  const handleReopenJob = async (job) => {
+    try {
+      setReopeningId(job.id);
+      await reopenJobApi(job);
+      toast.success("Job reopened successfully");
+      await fetchJobs();
+    } catch (error) {
+      const responseData = error?.response?.data;
+
+      if (responseData?.errors) {
+        const firstError = Object.values(responseData.errors)[0];
+        toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
+        return;
+      }
+
+      toast.error(responseData?.message || "Failed to reopen job.");
+    } finally {
+      setReopeningId(null);
     }
   };
 
@@ -86,7 +120,10 @@ export default function ClientJobsPage() {
           ) : (
             <div className="space-y-4">
               {myJobs.map((job) => (
-                <Card key={job.id} className="rounded-2xl border-slate-200 shadow-sm">
+                <Card
+                  key={job.id}
+                  className="rounded-2xl border-slate-200 shadow-sm"
+                >
                   <CardContent className="flex flex-col gap-4 p-6 md:flex-row md:items-start md:justify-between">
                     <div className="space-y-3">
                       <div className="flex flex-wrap items-center gap-3">
@@ -97,7 +134,8 @@ export default function ClientJobsPage() {
                       </div>
 
                       <p className="text-sm text-slate-600">
-                        {job.category} • {job.location} • {formatCurrency(job.salary)}
+                        {job.category} • {job.location} •{" "}
+                        {formatCurrency(job.salary)}
                       </p>
 
                       <p className="line-clamp-2 text-sm text-slate-600">
@@ -109,23 +147,43 @@ export default function ClientJobsPage() {
                       </p>
                     </div>
 
-                  <div className="flex flex-wrap gap-3">
-  <Button asChild variant="secondary" className="rounded-xl border-0">
-    <Link href={`/client/jobs/${job.id}/edit`}>Edit</Link>
-  </Button>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        asChild
+                        variant="secondary"
+                        className="rounded-xl border-0"
+                      >
+                        <Link href={`/client/jobs/${job.id}/edit`}>Edit</Link>
+                      </Button>
 
-  <Button asChild variant="secondary" className="rounded-xl border-0">
-    <Link href={`/client/jobs/${job.id}/applications`}>
-      View Applications
-    </Link>
-  </Button>
+                      <Button
+                        asChild
+                        variant="secondary"
+                        className="rounded-xl border-0"
+                      >
+                        <Link href={`/client/jobs/${job.id}/applications`}>
+                          View Applications
+                        </Link>
+                      </Button>
 
-  <DeleteJobDialog
-    jobTitle={job.title}
-    isDeleting={deletingId === job.id}
-    onConfirm={() => handleDelete(job.id)}
-  />
-</div>
+                      {job.status === "OPEN" ? (
+                        <CloseJobDialog
+                          jobTitle={job.title}
+                          isClosing={closingId === job.id}
+                          onConfirm={() => handleCloseJob(job)}
+                        />
+                      ) : (
+                        <Button
+                          onClick={() => handleReopenJob(job)}
+                          disabled={reopeningId === job.id}
+                          className="rounded-xl"
+                        >
+                          {reopeningId === job.id
+                            ? "Reopening..."
+                            : "Reopen Job"}
+                        </Button>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))}

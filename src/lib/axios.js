@@ -23,22 +23,22 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (typeof window !== "undefined" && error?.response?.status === 401) {
+      localStorage.removeItem(STORAGE_KEYS.TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.USER);
+
+      const currentPath = window.location.pathname;
+
+      if (currentPath !== "/login" && currentPath !== "/register") {
+        window.location.href = "/login";
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export default api;
-// Why this file is important
-
-// This gives you:
-
-// one backend base URL
-// one place to attach token
-// clean service files later
-// easier maintenance
-
-// So instead of doing this in every page:
-
-// axios.get("http://localhost:8080/api/jobs", ...)
-
-// you will do:
-
-// api.get("/api/jobs")
-
-// That is much cleaner.
