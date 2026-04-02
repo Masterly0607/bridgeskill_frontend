@@ -109,17 +109,23 @@ export default function ClientJobsPage() {
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
-                      <Button asChild variant="secondary" className="rounded-xl border-0">
-                        <Link href={`/client/jobs/${job.id}/edit`}>Edit</Link>
-                      </Button>
+                  <div className="flex flex-wrap gap-3">
+  <Button asChild variant="secondary" className="rounded-xl border-0">
+    <Link href={`/client/jobs/${job.id}/edit`}>Edit</Link>
+  </Button>
 
-                      <DeleteJobDialog
-                        jobTitle={job.title}
-                        isDeleting={deletingId === job.id}
-                        onConfirm={() => handleDelete(job.id)}
-                      />
-                    </div>
+  <Button asChild variant="secondary" className="rounded-xl border-0">
+    <Link href={`/client/jobs/${job.id}/applications`}>
+      View Applications
+    </Link>
+  </Button>
+
+  <DeleteJobDialog
+    jobTitle={job.title}
+    isDeleting={deletingId === job.id}
+    onConfirm={() => handleDelete(job.id)}
+  />
+</div>
                   </CardContent>
                 </Card>
               ))}

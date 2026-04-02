@@ -7,3 +7,6 @@ export const createStudentProfileApi = (payload) =>
 
 export const updateStudentProfileApi = (payload) =>
   api.put("/api/student-profile", payload);
+
+export const getStudentProfileForClientApi = (applicationId) =>
+  api.get(`/api/student-profile/client/applications/${applicationId}`);
