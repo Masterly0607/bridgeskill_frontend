@@ -43,19 +43,29 @@ export default function HomePage() {
               integration.
             </p>
 
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button asChild size="lg" className="min-w-36 rounded-xl">
-                <Link href="/login">Login</Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="min-w-36 rounded-xl"
-              >
-                <Link href="/jobs">Explore Jobs</Link>
-              </Button>
-            </div>
+         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+  <Button asChild size="lg" className="min-w-36 rounded-xl">
+    <Link href="/login">Login</Link>
+  </Button>
+
+  <Button
+    asChild
+    size="lg"
+    variant="outline"
+    className="min-w-36 rounded-xl"
+  >
+    <Link href="/register">Register</Link>
+  </Button>
+
+  <Button
+    asChild
+    size="lg"
+    variant="ghost"
+    className="min-w-36 rounded-xl"
+  >
+    <Link href="/jobs">Explore Jobs</Link>
+  </Button>
+</div>
           </div>
 
           <div className="mt-16 grid gap-6 md:grid-cols-3">
