@@ -9,6 +9,7 @@ import { loginApi } from "@/services/auth.service";
 import { useAuthStore } from "@/store/auth-store";
 import { getDashboardRouteByRole } from "@/lib/auth-redirect";
 import { AuthShell } from "@/components/common/auth-shell";
+import { GuestRoute } from "@/components/common/guest-route";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,57 +58,59 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthShell
-      title="Welcome back"
-      description="Login to access your dashboard and continue your workflow."
-      footer={
-        <p className="text-center text-sm text-slate-600">
-          Don&apos;t have an account?{" "}
-          <Link href="/register" className="font-medium text-slate-900 hover:underline">
-            Create one
-          </Link>
-        </p>
-      }
-    >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="Enter your email"
-            {...register("email", {
-              required: "Email is required",
-            })}
-          />
-          {errors.email && (
-            <p className="text-sm text-red-500">{errors.email.message}</p>
-          )}
-        </div>
+    <GuestRoute>
+      <AuthShell
+        title="Welcome back"
+        description="Login to access your dashboard and continue your workflow."
+        footer={
+          <p className="text-center text-sm text-slate-600">
+            Don&apos;t have an account?{" "}
+            <Link href="/register" className="font-medium text-slate-900 hover:underline">
+              Create one
+            </Link>
+          </p>
+        }
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              {...register("email", {
+                required: "Email is required",
+              })}
+            />
+            {errors.email && (
+              <p className="text-sm text-red-500">{errors.email.message}</p>
+            )}
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="Enter your password"
-            {...register("password", {
-              required: "Password is required",
-            })}
-          />
-          {errors.password && (
-            <p className="text-sm text-red-500">{errors.password.message}</p>
-          )}
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              {...register("password", {
+                required: "Password is required",
+              })}
+            />
+            {errors.password && (
+              <p className="text-sm text-red-500">{errors.password.message}</p>
+            )}
+          </div>
 
-        <Button
-          type="submit"
-          className="h-11 w-full rounded-xl"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Signing in..." : "Login"}
-        </Button>
-      </form>
-    </AuthShell>
+          <Button
+            type="submit"
+            className="h-11 w-full rounded-xl"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Signing in..." : "Login"}
+          </Button>
+        </form>
+      </AuthShell>
+    </GuestRoute>
   );
 }
