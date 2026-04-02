@@ -10,11 +10,15 @@ import { JobCard } from "@/components/jobs/job-card";
 import { JobsFilterBar } from "@/components/jobs/jobs-filter-bar";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageLoader } from "@/components/common/page-loader";
+import { LogoutButton } from "@/components/common/logout-button";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/store/auth-store";
+import { getDashboardRouteByRole } from "@/lib/auth-redirect";
 
 export default function JobsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isAuthenticated, user } = useAuthStore();
 
   const keywordFromUrl = searchParams.get("keyword") || "";
   const categoryFromUrl = searchParams.get("category") || "";
@@ -38,6 +42,9 @@ export default function JobsPage() {
     }),
     [keywordFromUrl, categoryFromUrl, statusFromUrl]
   );
+
+  const dashboardRoute =
+    isAuthenticated && user ? getDashboardRouteByRole(user.roleId) : null;
 
   useEffect(() => {
     setDraftFilters(currentFilters);
@@ -126,7 +133,12 @@ export default function JobsPage() {
     }, 400);
 
     return () => clearTimeout(timeout);
-  }, [draftFilters.keyword, draftFilters.category, draftFilters.status, currentFilters.keyword]);
+  }, [
+    draftFilters.keyword,
+    draftFilters.category,
+    draftFilters.status,
+    currentFilters.keyword,
+  ]);
 
   const handleReset = () => {
     const cleared = {
@@ -157,16 +169,27 @@ export default function JobsPage() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button asChild variant="secondary" className="rounded-xl">
-              <Link href="/login">Login</Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              className="rounded-xl border-white/20 bg-transparent text-white hover:bg-white hover:text-slate-900"
-            >
-              <Link href="/register">Register</Link>
-            </Button>
+            {isAuthenticated && user ? (
+              <>
+                <Button asChild variant="secondary" className="rounded-xl">
+                  <Link href={dashboardRoute}>Go to Dashboard</Link>
+                </Button>
+                <LogoutButton variant="outline" className="rounded-xl border-white/20 bg-transparent text-white hover:bg-white hover:text-slate-900" />
+              </>
+            ) : (
+              <>
+                <Button asChild variant="secondary" className="rounded-xl">
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="rounded-xl border-white/20 bg-transparent text-white hover:bg-white hover:text-slate-900"
+                >
+                  <Link href="/register">Register</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
 

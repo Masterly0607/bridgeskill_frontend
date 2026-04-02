@@ -1,29 +1,43 @@
+"use client";
+
 import Link from "next/link";
 import { BriefcaseBusiness, ShieldCheck, UserRound } from "lucide-react";
+
+import { useAuthStore } from "@/store/auth-store";
+import { getDashboardRouteByRole } from "@/lib/auth-redirect";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LogoutButton } from "@/components/common/logout-button";
 
 const features = [
   {
     title: "Student Portal",
-    description: "Browse jobs, build your profile, and submit applications with a clean and simple workflow.",
+    description:
+      "Browse jobs, build your profile, and submit applications with a clean and simple workflow.",
     icon: UserRound,
   },
   {
     title: "Client Workspace",
-    description: "Post jobs, review candidates, and update application statuses in one dashboard.",
+    description:
+      "Post jobs, review candidates, and update application statuses in one dashboard.",
     icon: BriefcaseBusiness,
   },
   {
     title: "Admin Monitoring",
-    description: "Track users, jobs, and application activity with a centralized overview.",
+    description:
+      "Track users, jobs, and application activity with a centralized overview.",
     icon: ShieldCheck,
   },
 ];
 
 export default function HomePage() {
+  const { isAuthenticated, user } = useAuthStore();
+
+  const dashboardRoute =
+    isAuthenticated && user ? getDashboardRouteByRole(user.roleId) : null;
+
   return (
     <main className="min-h-screen bg-slate-50">
       <section className="mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-12">
@@ -43,29 +57,56 @@ export default function HomePage() {
               integration.
             </p>
 
-         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-  <Button asChild size="lg" className="min-w-36 rounded-xl">
-    <Link href="/login">Login</Link>
-  </Button>
+            {isAuthenticated && user ? (
+              <p className="mt-4 text-sm font-medium text-slate-700">
+                Welcome back, {user.fullName}
+              </p>
+            ) : null}
 
-  <Button
-    asChild
-    size="lg"
-    variant="outline"
-    className="min-w-36 rounded-xl"
-  >
-    <Link href="/register">Register</Link>
-  </Button>
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              {isAuthenticated && user ? (
+                <>
+                  <Button asChild size="lg" className="min-w-40 rounded-xl">
+                    <Link href={dashboardRoute}>Go to Dashboard</Link>
+                  </Button>
 
-  <Button
-    asChild
-    size="lg"
-    variant="ghost"
-    className="min-w-36 rounded-xl"
-  >
-    <Link href="/jobs">Explore Jobs</Link>
-  </Button>
-</div>
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="min-w-40 rounded-xl"
+                  >
+                    <Link href="/jobs">Explore Jobs</Link>
+                  </Button>
+
+                  <LogoutButton />
+                </>
+              ) : (
+                <>
+                  <Button asChild size="lg" className="min-w-36 rounded-xl">
+                    <Link href="/login">Login</Link>
+                  </Button>
+
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="min-w-36 rounded-xl"
+                  >
+                    <Link href="/register">Register</Link>
+                  </Button>
+
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="ghost"
+                    className="min-w-36 rounded-xl"
+                  >
+                    <Link href="/jobs">Explore Jobs</Link>
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="mt-16 grid gap-6 md:grid-cols-3">

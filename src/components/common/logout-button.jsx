@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth-store";
 import { Button } from "@/components/ui/button";
 
-export function LogoutButton() {
+export function LogoutButton({ variant = "outline", className = "" }) {
   const router = useRouter();
   const clearAuth = useAuthStore((state) => state.clearAuth);
 
@@ -17,7 +17,7 @@ export function LogoutButton() {
   };
 
   return (
-    <Button variant="outline" onClick={handleLogout}>
+    <Button variant={variant} onClick={handleLogout} className={className}>
       Logout
     </Button>
   );

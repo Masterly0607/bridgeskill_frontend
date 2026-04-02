@@ -16,12 +16,15 @@ export default function StudentDashboardPage() {
             Student Dashboard
           </h1>
           <p className="mt-3 text-slate-600">
-            Manage your student profile and prepare to apply for jobs.
+            Manage your profile and track your job applications.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Button asChild className="rounded-xl">
               <Link href="/student/profile">Manage Profile</Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-xl">
+              <Link href="/student/applications">My Applications</Link>
             </Button>
             <LogoutButton />
           </div>

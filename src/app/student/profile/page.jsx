@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { ProtectedRoute } from "@/components/common/protected-route";
+import { BackButton } from "@/components/common/back-button";
 import { PageLoader } from "@/components/common/page-loader";
 import { StudentProfileForm } from "@/components/profile/student-profile-form";
 import { ROLES } from "@/lib/role";
@@ -20,6 +21,7 @@ const EMPTY_PROFILE = {
   skills: "",
   bio: "",
 };
+
 export default function StudentProfilePage() {
   const [profile, setProfile] = useState(EMPTY_PROFILE);
   const [loading, setLoading] = useState(true);
@@ -72,9 +74,7 @@ export default function StudentProfilePage() {
         return;
       }
 
-      toast.error(
-        responseData?.message || "Failed to save student profile."
-      );
+      toast.error(responseData?.message || "Failed to save student profile.");
     } finally {
       setIsSubmitting(false);
     }
@@ -84,6 +84,8 @@ export default function StudentProfilePage() {
     <ProtectedRoute allowedRoles={[ROLES.STUDENT]}>
       <main className="min-h-screen bg-slate-50 px-6 py-10">
         <div className="mx-auto max-w-5xl space-y-6">
+          <BackButton href="/student/dashboard" label="Back to Dashboard" />
+
           <Card className="rounded-3xl border-slate-200 shadow-sm">
             <CardHeader>
               <CardTitle className="text-3xl font-bold text-slate-900">
