@@ -42,6 +42,7 @@ export const useAuthStore = create((set) => ({
     if (typeof window === "undefined") return;
 
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
 
     if (!token) {
       set({
@@ -54,9 +55,25 @@ export const useAuthStore = create((set) => ({
     }
 
     try {
-      const response = await api.get("/api/auth/me");
+      let parsedStoredUser = null;
 
-      const user = response.data;
+      if (storedUser) {
+        try {
+          parsedStoredUser = JSON.parse(storedUser);
+        } catch {
+          parsedStoredUser = null;
+        }
+      }
+
+      const response = await api.get("/api/auth/me");
+      const me = response.data;
+
+      const user = {
+        id: me?.id ?? parsedStoredUser?.id ?? null,
+        fullName: me?.fullName ?? parsedStoredUser?.fullName ?? "",
+        email: me?.email ?? parsedStoredUser?.email ?? "",
+        roleId: me?.roleId ?? parsedStoredUser?.roleId ?? null,
+      };
 
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
 
@@ -79,17 +96,3 @@ export const useAuthStore = create((set) => ({
     }
   },
 }));
-
-// 3. What this store means
-
-// This store keeps 3 important values:
-
-// token → JWT from backend
-// user → logged-in user info
-// isAuthenticated → true/false for route logic
-
-// And 3 actions:
-
-// setAuth() → save login data
-// clearAuth() → logout
-// hydrateAuth() → restore auth from browser storage on refresh

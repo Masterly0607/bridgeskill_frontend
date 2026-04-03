@@ -1,176 +1,256 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { GraduationCap, BriefcaseBusiness, Wallet, Clock3 } from "lucide-react";
 import { toast } from "sonner";
 
 import { registerApi } from "@/services/auth.service";
-import { AuthShell } from "@/components/common/auth-shell";
-import { GuestRoute } from "@/components/common/guest-route";
-
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { GuestOnlyRoute } from "@/components/common/guest-only-route";
 
-const roles = [
-  { label: "Student", value: 2 },
-  { label: "Client", value: 3 },
-];
+function BenefitCard({ icon: Icon, title, description }) {
+  return (
+    <div className="rounded-2xl bg-slate-50 p-4">
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white">
+        <Icon className="h-5 w-5 text-slate-700" />
+      </div>
+      <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+    </div>
+  );
+}
 
 export default function RegisterPage() {
   const router = useRouter();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    watch,
-  } = useForm({
-    defaultValues: {
-      fullName: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      roleId: "",
-    },
+  const [form, setForm] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    roleId: "",
   });
 
-  const password = watch("password");
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const onSubmit = async (values) => {
+  const handleChange = (field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [field]: "",
+    }));
+  };
+
+  const validate = () => {
+    const nextErrors = {};
+
+    if (!form.fullName.trim()) nextErrors.fullName = "Full name is required.";
+    if (!form.email.trim()) nextErrors.email = "Email is required.";
+    if (!form.password.trim()) nextErrors.password = "Password is required.";
+    if (!form.confirmPassword.trim()) {
+      nextErrors.confirmPassword = "Confirm password is required.";
+    }
+    if (!form.roleId) nextErrors.roleId = "Please select an account type.";
+
+    if (form.password && form.confirmPassword && form.password !== form.confirmPassword) {
+      nextErrors.confirmPassword = "Passwords do not match.";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validate()) return;
+
     try {
+      setIsSubmitting(true);
+
       await registerApi({
-        fullName: values.fullName,
-        email: values.email,
-        password: values.password,
-        confirmPassword: values.confirmPassword,
-        roleId: Number(values.roleId),
+        fullName: form.fullName.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        confirmPassword: form.confirmPassword,
+        roleId: Number(form.roleId),
       });
 
-      toast.success("Registration successful. Please login.");
+      toast.success("Account created successfully. Please log in.");
       router.push("/login");
     } catch (error) {
       const responseData = error?.response?.data;
 
       if (responseData?.errors) {
         const firstError = Object.values(responseData.errors)[0];
-        toast.error(firstError);
-        return;
+        toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
+      } else {
+        toast.error(responseData?.message || "Failed to create account.");
       }
-
-      toast.error(responseData?.message || "Registration failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-   return (
-    <GuestRoute>
-      <AuthShell
-        title="Create your account"
-        description="Register as a student or client to start using the platform."
-        footer={
-          <p className="text-center text-sm text-slate-600">
-            Already have an account?{" "}
-            <Link href="/login" className="font-medium text-slate-900 hover:underline">
-              Login here
-            </Link>
-          </p>
-        }
-      >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full name</Label>
-            <Input
-              id="fullName"
-              placeholder="Enter your full name"
-              {...register("fullName", {
-                required: "Full name is required",
-              })}
-            />
-            {errors.fullName && (
-              <p className="text-sm text-red-500">{errors.fullName.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              {...register("email", {
-                required: "Email is required",
-              })}
-            />
-            {errors.email && (
-              <p className="text-sm text-red-500">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="roleId">Register as</Label>
-            <select
-              id="roleId"
-              className="flex h-10 w-full rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm shadow-sm outline-none"
-              {...register("roleId", {
-                required: "Role is required",
-              })}
-            >
-              <option value="">Select role</option>
-              {roles.map((role) => (
-                <option key={role.value} value={role.value}>
-                  {role.label}
-                </option>
-              ))}
-            </select>
-            {errors.roleId && (
-              <p className="text-sm text-red-500">{errors.roleId.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              {...register("password", {
-                required: "Password is required",
-              })}
-            />
-            {errors.password && (
-              <p className="text-sm text-red-500">{errors.password.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              placeholder="Confirm your password"
-              {...register("confirmPassword", {
-                required: "Confirm password is required",
-                validate: (value) =>
-                  value === password || "Passwords do not match",
-              })}
-            />
-            {errors.confirmPassword && (
-              <p className="text-sm text-red-500">
-                {errors.confirmPassword.message}
+  return (
+    <GuestOnlyRoute>
+      <main className="min-h-screen bg-slate-50 px-4 py-10 md:px-6 md:py-14">
+        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_0.95fr]">
+          <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+            <div className="space-y-4">
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-slate-500">
+                Join BridgeSkill
               </p>
-            )}
-          </div>
+              <h1 className="text-3xl font-bold text-slate-900 md:text-4xl">
+                Create an account and start your student-friendly journey
+              </h1>
+              <p className="text-sm leading-7 text-slate-600 md:text-base">
+                BridgeSkill is built for all students, including high school,
+                university, and beginners who want small flexible jobs to earn
+                money and gain real-life experience.
+              </p>
+            </div>
 
-          <Button
-            type="submit"
-            className="h-11 w-full rounded-xl"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Creating account..." : "Register"}
-          </Button>
-        </form>
-      </AuthShell>
-    </GuestRoute>
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              <BenefitCard
+                icon={GraduationCap}
+                title="For all student levels"
+                description="Suitable for high school students, university students, and beginners."
+              />
+              <BenefitCard
+                icon={Wallet}
+                title="Earn extra income"
+                description="Find practical small jobs that help you earn while studying."
+              />
+              <BenefitCard
+                icon={Clock3}
+                title="Flexible opportunities"
+                description="Explore part-time, weekend, short-term, and freelance work."
+              />
+              <BenefitCard
+                icon={BriefcaseBusiness}
+                title="Useful first experience"
+                description="Build confidence and real skills through beginner-friendly jobs."
+              />
+            </div>
+
+            <div className="mt-8 rounded-2xl bg-slate-50 p-5">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Choose the right account
+              </h2>
+              <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+                <p>
+                  <span className="font-semibold text-slate-900">Student:</span>{" "}
+                  For learners who want to find small jobs, earn income, and build skills.
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">Client:</span>{" "}
+                  For businesses or individuals who want to post flexible jobs for students.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold text-slate-900">Create Account</h2>
+              <p className="text-sm text-slate-600">
+                Register as a student or client to continue.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-900">Full Name</label>
+                <input
+                  type="text"
+                  value={form.fullName}
+                  onChange={(e) => handleChange("fullName", e.target.value)}
+                  placeholder="Enter your full name"
+                  className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-slate-400"
+                />
+                {errors.fullName && (
+                  <p className="text-sm text-red-500">{errors.fullName}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-900">Email</label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => handleChange("email", e.target.value)}
+                  placeholder="Enter your email"
+                  className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-slate-400"
+                />
+                {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-900">Password</label>
+                <input
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => handleChange("password", e.target.value)}
+                  placeholder="Enter password"
+                  className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-slate-400"
+                />
+                {errors.password && (
+                  <p className="text-sm text-red-500">{errors.password}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-900">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  value={form.confirmPassword}
+                  onChange={(e) => handleChange("confirmPassword", e.target.value)}
+                  placeholder="Confirm password"
+                  className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-slate-400"
+                />
+                {errors.confirmPassword && (
+                  <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-900">Account Type</label>
+                <select
+                  value={form.roleId}
+                  onChange={(e) => handleChange("roleId", e.target.value)}
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-slate-400"
+                >
+                  <option value="">Select account type</option>
+                  <option value="2">Student</option>
+                  <option value="3">Client</option>
+                </select>
+                {errors.roleId && <p className="text-sm text-red-500">{errors.roleId}</p>}
+              </div>
+
+              <Button type="submit" disabled={isSubmitting} className="w-full rounded-xl">
+                {isSubmitting ? "Creating Account..." : "Create Account"}
+              </Button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-slate-600">
+              Already have an account?{" "}
+              <Link href="/login" className="font-medium text-slate-900 hover:underline">
+                Login here
+              </Link>
+            </p>
+          </section>
+        </div>
+      </main>
+    </GuestOnlyRoute>
   );
 }

@@ -4,16 +4,13 @@ import { useEffect } from "react";
 import { useAuthStore } from "@/store/auth-store";
 
 export function AuthProvider({ children }) {
-  const hydrateAuth = useAuthStore((state) => state.hydrateAuth);
+  const { hydrateAuth, isHydrated } = useAuthStore();
 
   useEffect(() => {
-    hydrateAuth();
-  }, [hydrateAuth]);
+    if (!isHydrated) {
+      hydrateAuth();
+    }
+  }, [hydrateAuth, isHydrated]);
 
   return children;
 }
-// Why:
-
-// layout.js is a server component by default
-// Zustand + localStorage needs client-side logic
-// this wrapper restores auth once when app loads

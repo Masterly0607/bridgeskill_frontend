@@ -3,45 +3,55 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import { useAuthStore } from "@/store/auth-store";
-import { hasRequiredRole } from "@/lib/role";
-import { getDashboardRouteByRole } from "@/lib/auth-redirect";
 import { PageLoader } from "@/components/common/page-loader";
+import { useAuthStore } from "@/store/auth-store";
 
 export function ProtectedRoute({ children, allowedRoles = [] }) {
   const router = useRouter();
-  const { isAuthenticated, user, isHydrated } = useAuthStore();
+  const { isAuthenticated, isHydrated, user } = useAuthStore();
 
   useEffect(() => {
     if (!isHydrated) return;
 
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated) {
       router.replace("/login");
       return;
     }
 
-    if (allowedRoles.length > 0 && !hasRequiredRole(user.roleId, allowedRoles)) {
-      router.replace(getDashboardRouteByRole(user.roleId));
+    if (
+      allowedRoles.length > 0 &&
+      !allowedRoles.includes(user?.roleId)
+    ) {
+      router.replace("/");
     }
-  }, [isHydrated, isAuthenticated, user, allowedRoles, router]);
+  }, [isAuthenticated, isHydrated, router, allowedRoles, user?.roleId]);
 
   if (!isHydrated) {
-    return <PageLoader />;
+    return (
+      <PageLoader
+        title="Checking access..."
+        description="Please wait while we verify your account."
+      />
+    );
   }
 
-  if (!isAuthenticated || !user) {
-    return null;
+  if (!isAuthenticated) {
+    return (
+      <PageLoader
+        title="Redirecting..."
+        description="You need to sign in before accessing this page."
+      />
+    );
   }
 
-  if (allowedRoles.length > 0 && !hasRequiredRole(user.roleId, allowedRoles)) {
-    return null;
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.roleId)) {
+    return (
+      <PageLoader
+        title="Redirecting..."
+        description="You do not have permission to access this page."
+      />
+    );
   }
 
   return children;
 }
-
-// What it does:
-
-// if user not logged in → go to /login
-// if role is wrong → send user to correct dashboard
-// if access is correct → render page

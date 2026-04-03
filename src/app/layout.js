@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/components/common/auth-provider";
+import { SiteHeader } from "@/components/layout/site-header";
 
 export const metadata = {
   title: "BridgeSkill",
@@ -10,8 +11,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body className="bg-slate-50 text-slate-900">
         <AuthProvider>
+          <SiteHeader />
           {children}
           <Toaster richColors position="top-right" />
         </AuthProvider>
@@ -19,6 +21,3 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
-
-// Why AuthProvider here?
-// so auth can restore from localStorage when app starts.

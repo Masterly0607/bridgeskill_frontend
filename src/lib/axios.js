@@ -27,12 +27,17 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (typeof window !== "undefined" && error?.response?.status === 401) {
+      const requestUrl = error?.config?.url || "";
+      const currentPath = window.location.pathname;
+
+      const isAuthMeRequest = requestUrl.includes("/api/auth/me");
+      const isAuthPage =
+        currentPath === "/login" || currentPath === "/register";
+
       localStorage.removeItem(STORAGE_KEYS.TOKEN);
       localStorage.removeItem(STORAGE_KEYS.USER);
 
-      const currentPath = window.location.pathname;
-
-      if (currentPath !== "/login" && currentPath !== "/register") {
+      if (!isAuthMeRequest && !isAuthPage) {
         window.location.href = "/login";
       }
     }

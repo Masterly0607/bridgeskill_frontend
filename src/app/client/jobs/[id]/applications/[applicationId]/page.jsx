@@ -3,6 +3,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
+import {
+  Sparkles,
+  UserRound,
+  FileText,
+  CheckCircle2,
+  GraduationCap,
+} from "lucide-react";
 
 import { ProtectedRoute } from "@/components/common/protected-route";
 import { BackButton } from "@/components/common/back-button";
@@ -18,6 +25,22 @@ import {
   updateApplicationStatusApi,
 } from "@/services/applications.service";
 import { getStudentProfileForClientApi } from "@/services/student-profile.service";
+
+function SectionHint({ icon: Icon, title, description }) {
+  return (
+    <div className="rounded-2xl bg-slate-50 p-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white">
+          <Icon className="h-5 w-5 text-slate-700" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-slate-900">{title}</p>
+          <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function ClientApplicationDetailPage() {
   const params = useParams();
@@ -76,6 +99,8 @@ export default function ClientApplicationDetailPage() {
     }
   };
 
+  const applicantName = studentProfile?.fullName || "Applicant";
+
   return (
     <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
       <main className="min-h-screen bg-slate-50 px-4 py-8 md:px-6 md:py-10">
@@ -95,38 +120,80 @@ export default function ClientApplicationDetailPage() {
             </Card>
           ) : (
             <Card className="rounded-3xl border-slate-200 shadow-sm">
-              <CardHeader className="space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <CardTitle className="text-3xl font-bold text-slate-900">
-                      Student #{application.studentId}
-                    </CardTitle>
-                  
+              <CardHeader className="space-y-4 border-b border-slate-100 pb-6">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="space-y-3">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700">
+                      <Sparkles className="h-4 w-4" />
+                      Applicant review detail
+                    </div>
+
+                    <div>
+                      <CardTitle className="text-3xl font-bold text-slate-900">
+                        {applicantName}
+                      </CardTitle>
+                      <p className="mt-2 text-sm text-slate-600">
+                        Application submitted on{" "}
+                        {formatDateTime(application.appliedAt)}
+                      </p>
+                    </div>
                   </div>
 
                   <ApplicationStatusBadge status={application.status} />
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-6">
-              
+              <CardContent className="space-y-6 p-6">
+                <section className="grid gap-4 md:grid-cols-2">
+                  <SectionHint
+                    icon={UserRound}
+                    title="Review the student profile"
+                    description="Check the applicant’s education background, skills, and short bio first."
+                  />
+                  <SectionHint
+                    icon={FileText}
+                    title="Read the cover letter"
+                    description="Look for practical motivation, availability, and how well the student understands the job."
+                  />
+                </section>
 
-                <div className="space-y-3">
+                <section className="space-y-3">
                   <h2 className="text-2xl font-semibold text-slate-900">
                     Student Profile
                   </h2>
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="rounded-2xl bg-slate-50 p-5">
-                      <p className="text-sm font-medium text-slate-500">Phone</p>
+                      <p className="text-sm font-medium text-slate-500">
+                        Full Name
+                      </p>
+                      <p className="mt-2 text-base font-semibold text-slate-900">
+                        {studentProfile?.fullName || "N/A"}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl bg-slate-50 p-5">
+                      <p className="text-sm font-medium text-slate-500">
+                        Email
+                      </p>
+                      <p className="mt-2 text-base font-semibold text-slate-900">
+                        {studentProfile?.email || "N/A"}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl bg-slate-50 p-5">
+                      <p className="text-sm font-medium text-slate-500">
+                        Phone
+                      </p>
                       <p className="mt-2 text-base font-semibold text-slate-900">
                         {studentProfile?.phone || "N/A"}
                       </p>
                     </div>
 
                     <div className="rounded-2xl bg-slate-50 p-5">
-                      <p className="text-sm font-medium text-slate-500">
-                        University
+                      <p className="flex items-center gap-2 text-sm font-medium text-slate-500">
+                        <GraduationCap className="h-4 w-4" />
+                        School or University
                       </p>
                       <p className="mt-2 text-base font-semibold text-slate-900">
                         {studentProfile?.university || "N/A"}
@@ -147,18 +214,35 @@ export default function ClientApplicationDetailPage() {
                       {studentProfile?.bio || "N/A"}
                     </p>
                   </div>
-                </div>
+                </section>
 
-                <div className="space-y-3">
+                <section className="space-y-3">
                   <h2 className="text-2xl font-semibold text-slate-900">
                     Cover Letter
                   </h2>
+
                   <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm leading-7 text-slate-700">
                     {application.coverLetter || "No cover letter provided."}
                   </div>
-                </div>
+                </section>
 
-                <div className="space-y-3">
+                <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="mt-1 h-5 w-5 text-slate-700" />
+                    <div>
+                      <h2 className="text-lg font-semibold text-slate-900">
+                        Review recommendation
+                      </h2>
+                      <p className="mt-2 text-sm leading-7 text-slate-600">
+                        Consider whether this student is suitable for the job level,
+                        schedule, and practical tasks. Use the status update clearly
+                        so the applicant can understand the outcome.
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="space-y-3">
                   <h2 className="text-2xl font-semibold text-slate-900">
                     Update Status
                   </h2>
@@ -180,7 +264,7 @@ export default function ClientApplicationDetailPage() {
                       {updating ? "Updating..." : "Update Status"}
                     </Button>
                   </div>
-                </div>
+                </section>
               </CardContent>
             </Card>
           )}

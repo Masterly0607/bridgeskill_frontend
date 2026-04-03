@@ -8,25 +8,17 @@ import { ProtectedRoute } from "@/components/common/protected-route";
 import { BackButton } from "@/components/common/back-button";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageLoader } from "@/components/common/page-loader";
-import CloseJobDialog from "@/components/jobs/close-job-dialog";
-import { JobStatusBadge } from "@/components/jobs/job-status-badge";
+import { JobCard } from "@/components/jobs/job-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { formatCurrency, formatDateTime } from "@/lib/format";
 import { ROLES } from "@/lib/role";
+import { closeJobApi, getJobsApi, reopenJobApi } from "@/services/jobs.service";
 import { useAuthStore } from "@/store/auth-store";
-import {
-  closeJobApi,
-  getJobsApi,
-  reopenJobApi,
-} from "@/services/jobs.service";
 
 export default function ClientJobsPage() {
-  const { user } = useAuthStore();
+  const { user, isHydrated } = useAuthStore();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [closingId, setClosingId] = useState(null);
-  const [reopeningId, setReopeningId] = useState(null);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
 
   const fetchJobs = async () => {
     try {
@@ -47,47 +39,31 @@ export default function ClientJobsPage() {
   const myJobs = useMemo(() => {
     if (!user?.id) return [];
     return jobs.filter((job) => Number(job.clientId) === Number(user.id));
-  }, [jobs, user]);
+  }, [jobs, user?.id]);
 
   const handleCloseJob = async (job) => {
     try {
-      setClosingId(job.id);
+      setActionLoadingId(job.id);
       await closeJobApi(job);
       toast.success("Job closed successfully");
       await fetchJobs();
     } catch (error) {
-      const responseData = error?.response?.data;
-
-      if (responseData?.errors) {
-        const firstError = Object.values(responseData.errors)[0];
-        toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
-        return;
-      }
-
-      toast.error(responseData?.message || "Failed to close job.");
+      toast.error(error?.response?.data?.message || "Failed to close job.");
     } finally {
-      setClosingId(null);
+      setActionLoadingId(null);
     }
   };
 
   const handleReopenJob = async (job) => {
     try {
-      setReopeningId(job.id);
+      setActionLoadingId(job.id);
       await reopenJobApi(job);
       toast.success("Job reopened successfully");
       await fetchJobs();
     } catch (error) {
-      const responseData = error?.response?.data;
-
-      if (responseData?.errors) {
-        const firstError = Object.values(responseData.errors)[0];
-        toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
-        return;
-      }
-
-      toast.error(responseData?.message || "Failed to reopen job.");
+      toast.error(error?.response?.data?.message || "Failed to reopen job.");
     } finally {
-      setReopeningId(null);
+      setActionLoadingId(null);
     }
   };
 
@@ -110,7 +86,7 @@ export default function ClientJobsPage() {
             </p>
           </div>
 
-          {loading ? (
+          {!isHydrated || loading ? (
             <PageLoader />
           ) : myJobs.length === 0 ? (
             <EmptyState
@@ -118,74 +94,40 @@ export default function ClientJobsPage() {
               description="You have not created any jobs yet."
             />
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-6 md:grid-cols-2">
               {myJobs.map((job) => (
-                <Card
+                <JobCard
                   key={job.id}
-                  className="rounded-2xl border-slate-200 shadow-sm"
-                >
-                  <CardContent className="flex flex-col gap-4 p-6 md:flex-row md:items-start md:justify-between">
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-2xl font-semibold text-slate-900">
-                          {job.title}
-                        </h2>
-                        <JobStatusBadge status={job.status} />
-                      </div>
-
-                      <p className="text-sm text-slate-600">
-                        {job.category} • {job.location} •{" "}
-                        {formatCurrency(job.salary)}
-                      </p>
-
-                      <p className="line-clamp-2 text-sm text-slate-600">
-                        {job.description}
-                      </p>
-
-                      <p className="text-xs text-slate-500">
-                        Posted: {formatDateTime(job.createdAt)}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-3">
-                      <Button
-                        asChild
-                        variant="secondary"
-                        className="rounded-xl border-0"
-                      >
+                  job={job}
+                  detailHref={`/client/jobs/${job.id}/applications`}
+                  actions={
+                    <>
+                      <Button asChild variant="outline" className="rounded-xl">
                         <Link href={`/client/jobs/${job.id}/edit`}>Edit</Link>
                       </Button>
 
-                      <Button
-                        asChild
-                        variant="secondary"
-                        className="rounded-xl border-0"
-                      >
-                        <Link href={`/client/jobs/${job.id}/applications`}>
-                          View Applications
-                        </Link>
-                      </Button>
-
                       {job.status === "OPEN" ? (
-                        <CloseJobDialog
-                          jobTitle={job.title}
-                          isClosing={closingId === job.id}
-                          onConfirm={() => handleCloseJob(job)}
-                        />
+                        <Button
+                          variant="outline"
+                          className="rounded-xl"
+                          onClick={() => handleCloseJob(job)}
+                          disabled={actionLoadingId === job.id}
+                        >
+                          {actionLoadingId === job.id ? "Closing..." : "Close Job"}
+                        </Button>
                       ) : (
                         <Button
-                          onClick={() => handleReopenJob(job)}
-                          disabled={reopeningId === job.id}
+                          variant="outline"
                           className="rounded-xl"
+                          onClick={() => handleReopenJob(job)}
+                          disabled={actionLoadingId === job.id}
                         >
-                          {reopeningId === job.id
-                            ? "Reopening..."
-                            : "Reopen Job"}
+                          {actionLoadingId === job.id ? "Reopening..." : "Reopen Job"}
                         </Button>
                       )}
-                    </div>
-                  </CardContent>
-                </Card>
+                    </>
+                  }
+                />
               ))}
             </div>
           )}
